@@ -259,21 +259,15 @@
 
   /* ---------- firma divider ---------- */
   .firma{
-    padding:70px 0;overflow:hidden;position:relative;
+    padding:56px 0;overflow:hidden;position:relative;
     border-top:1px solid var(--line);border-bottom:1px solid var(--line);
     background:var(--bg-soft);
   }
-  .firma-mark{
-    display:flex;justify-content:center;margin-bottom:34px;
+  .firma-label{
+    text-align:center;color:var(--acc);font-family:'Rajdhani',Arial,sans-serif;
+    font-weight:600;font-size:.82rem;letter-spacing:.22em;text-transform:uppercase;
+    margin:0 0 26px;
   }
-  .firma-mark img{
-    width:150px;opacity:0;transform:scale(.7) rotate(-6deg);
-    transition:opacity .9s var(--ease),transform .9s var(--ease);
-    filter:drop-shadow(0 0 40px rgba(242,194,48,.18));
-    -webkit-mask-image:radial-gradient(circle at 50% 48%, #000 42%, transparent 68%);
-    mask-image:radial-gradient(circle at 50% 48%, #000 42%, transparent 68%);
-  }
-  .firma-mark.is-in img{opacity:1;transform:scale(1) rotate(0deg);}
   .ticker-track{
     display:flex;white-space:nowrap;
     animation:ticker 26s linear infinite;
@@ -446,9 +440,7 @@
 
   <!-- DIVISOR DE FIRMA -->
   <section class="firma">
-    <div class="firma-mark reveal" id="firmaMark">
-      <img src="img/logo-slash.webp" width="150" height="141" alt="" loading="lazy">
-    </div>
+    <p class="firma-label reveal">— Marcas con las que trabajamos —</p>
     <div class="ticker-track" aria-hidden="true">
       <span>BMW <i>//</i> AUDI <i>//</i> MERCEDES-AMG <i>//</i> VOLKSWAGEN <i>//</i> FORD <i>//</i> CUPRA <i>//</i> MCLAREN <i>//</i></span>
       <span>BMW <i>//</i> AUDI <i>//</i> MERCEDES-AMG <i>//</i> VOLKSWAGEN <i>//</i> FORD <i>//</i> CUPRA <i>//</i> MCLAREN <i>//</i></span>
@@ -640,26 +632,26 @@
   }
   window.addEventListener('scroll', onScroll, {passive:true});
 
-  /* scroll reveal */
-  var revealEls = document.querySelectorAll('.reveal, .reveal-stagger, .firma-mark');
+  /* scroll reveal — replays every time the element enters OR leaves the viewport,
+     so it animates both scrolling down and scrolling back up */
+  var revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
   if ('IntersectionObserver' in window){
     var io = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
-        if (entry.isIntersecting){
-          entry.target.classList.add('is-in');
-          io.unobserve(entry.target);
-        }
+        entry.target.classList.toggle('is-in', entry.isIntersecting);
       });
     }, {threshold:0.15, rootMargin:'0px 0px -60px 0px'});
     revealEls.forEach(function(el){ io.observe(el); });
 
-    /* animated counters */
+    /* animated counters — replay from 0 each time they scroll back into view */
     var counters = document.querySelectorAll('[data-count]');
     var co = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
         if (entry.isIntersecting){
           animateCount(entry.target);
-          co.unobserve(entry.target);
+        } else {
+          entry.target.dataset.runId = '';
+          entry.target.textContent = '0';
         }
       });
     }, {threshold:0.6});
@@ -673,10 +665,13 @@
 
   function animateCount(el){
     var target = parseInt(el.getAttribute('data-count'), 10) || 0;
-    if (reduceMotion){ el.textContent = target.toLocaleString('es-MX'); return; }
+    if (reduceMotion){ el.textContent = target.toLocaleString('es-MX') + (target >= 1000 ? '+' : ''); return; }
+    var runId = String(Date.now()) + Math.random();
+    el.dataset.runId = runId;
     var duration = 1400;
     var start = null;
     function step(ts){
+      if (el.dataset.runId !== runId) return;
       if (!start) start = ts;
       var progress = Math.min((ts - start) / duration, 1);
       var eased = 1 - Math.pow(1 - progress, 3);
